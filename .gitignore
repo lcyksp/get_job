@@ -61,3 +61,6 @@ dist/
 
 # Playwright User Data Directory
 chrome_user_data/
+
+# Backup files
+*.bak
