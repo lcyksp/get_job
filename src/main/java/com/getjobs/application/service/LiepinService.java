@@ -150,6 +150,33 @@ public class LiepinService {
     }
 
     /**
+     * 判断某个岗位或公司是否已经投递过
+     */
+    public boolean isJobOrCompanyDelivered(Long jobId, String companyName) {
+        if (jobId != null) {
+            QueryWrapper<LiepinEntity> wrapper = new QueryWrapper<>();
+            wrapper.eq("job_id", jobId)
+                    .eq("delivered", 1)
+                    .last("LIMIT 1");
+            Long count = liepinMapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        if (companyName != null && !companyName.trim().isEmpty()) {
+            QueryWrapper<LiepinEntity> wrapper = new QueryWrapper<>();
+            wrapper.eq("comp_name", companyName.trim())
+                    .eq("delivered", 1)
+                    .last("LIMIT 1");
+            Long count = liepinMapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 批量插入岗位快照（仅不存在时），减少单次网络响应后的数据库操作时间
      */
     public void insertSnapshotsIfNotExistsBatch(java.util.List<LiepinEntity> entities) {

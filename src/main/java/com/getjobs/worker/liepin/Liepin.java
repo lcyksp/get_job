@@ -351,6 +351,22 @@ public class Liepin {
             if (jobName == null) jobName = "岗位";
             if (companyName == null) companyName = "公司";
             if (salary == null) salary = "";
+
+            // 1) 过滤非技术岗位（如销售、商务、客服等）
+            if (com.getjobs.worker.utils.JobUtils.isNonTechnicalJob(jobName)) {
+                log.info("[猎聘] 过滤非技术岗（销售/客服/商务等）| 公司：{} | 岗位：{}", companyName, jobName);
+                continue;
+            }
+
+            // 2) 查重：若该岗位或该公司已经成功投递过，则跳过
+            Long checkJobId = null;
+            if (i < lastApiEntities.size()) {
+                checkJobId = lastApiEntities.get(i).getJobId();
+            }
+            if (liepinService.isJobOrCompanyDelivered(checkJobId, companyName)) {
+                log.info("[猎聘] 跳过已投递过的岗位/公司 | 公司：{} | 岗位：{}", companyName, jobName);
+                continue;
+            }
             
             try {
                 // 使用JavaScript滚动到卡片位置，更稳定

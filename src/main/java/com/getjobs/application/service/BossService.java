@@ -627,6 +627,33 @@ public class BossService {
         bossJobDataMapper.update(update, uw);
     }
 
+    /**
+     * 判断某个岗位或公司是否已经投递过
+     */
+    public boolean isJobOrCompanyDelivered(String encryptId, String companyName) {
+        if (encryptId != null && !encryptId.trim().isEmpty()) {
+            QueryWrapper<BossJobDataEntity> wrapper = new QueryWrapper<>();
+            wrapper.eq("encrypt_id", encryptId.trim())
+                    .eq("delivery_status", "已投递")
+                    .last("LIMIT 1");
+            Long count = bossJobDataMapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        if (companyName != null && !companyName.trim().isEmpty()) {
+            QueryWrapper<BossJobDataEntity> wrapper = new QueryWrapper<>();
+            wrapper.eq("company_name", companyName.trim())
+                    .eq("delivery_status", "已投递")
+                    .last("LIMIT 1");
+            Long count = bossJobDataMapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ==================== 投递分析（Dashboard）相关方法 ====================
 
     /**

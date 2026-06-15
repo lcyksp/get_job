@@ -72,6 +72,30 @@ public class JobUtils {
         return random.nextInt((max - min) + 1) + min;
     }
 
+    /**
+     * 判断是否为非技术类岗位（如销售、客服、人事等），防范技术岗位误投递
+     *
+     * @param jobTitle 岗位名称
+     * @return 是否应被过滤
+     */
+    public static boolean isNonTechnicalJob(String jobTitle) {
+        if (jobTitle == null || jobTitle.trim().isEmpty()) {
+            return false;
+        }
+        String title = jobTitle.trim().toLowerCase();
+        String[] blackKeywords = {
+            "销售", "商务", "客服", "招聘", "人事", "前台", "电销", "面销", 
+            "销售代表", "客户代表", "销售经理", "课程顾问", "求职顾问", "规划顾问", 
+            "置业顾问", "销售专员", "商务专员"
+        };
+        for (String kw : blackKeywords) {
+            if (title.contains(kw)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void main(String[] args) {
         Date star = new Date();
         PlaywrightUtil.sleep(3);
@@ -79,3 +103,4 @@ public class JobUtils {
         System.out.println(a);
     }
 }
+

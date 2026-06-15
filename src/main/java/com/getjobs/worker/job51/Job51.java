@@ -279,12 +279,31 @@ public class Job51 {
                 }
 
                 try {
+                    String title = i < titles.count() ? titles.nth(i).textContent() : "未知职位";
+                    String company = i < companies.count() ? companies.nth(i).textContent() : "未知公司";
+
+                    // 1) 过滤非技术岗位（如销售、商务、客服等）
+                    if (com.getjobs.worker.utils.JobUtils.isNonTechnicalJob(title)) {
+                        log.info("[51job] 过滤非技术岗（销售/客服/商务等）| 公司：{} | 岗位：{}", company, title);
+                        continue;
+                    }
+
+                    // 2) 查重：若该岗位或该公司已经成功投递过，则跳过
+                    Long checkJobId = null;
+                    synchronized (currentPageJobIds) {
+                        if (i < currentPageJobIds.size()) {
+                            checkJobId = currentPageJobIds.get(i);
+                        }
+                    }
+                    if (job51Service.isJobOrCompanyDelivered(checkJobId, company)) {
+                        log.info("[51job] 跳过已投递过的岗位/公司 | 公司：{} | 岗位：{}", company, title);
+                        continue;
+                    }
+
                     Locator checkbox = checkboxes.nth(i);
                     // 使用JavaScript点击，避免元素被遮挡
                     checkbox.evaluate("el => el.click()");
 
-                    String title = i < titles.count() ? titles.nth(i).textContent() : "未知职位";
-                    String company = i < companies.count() ? companies.nth(i).textContent() : "未知公司";
                     String jobInfo = company + " | " + title;
                     resultList.add(jobInfo);
 //                    log.info("选中: {}", jobInfo);

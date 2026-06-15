@@ -704,11 +704,23 @@ public class Boss {
             return;
         }
 
+        // 过滤非技术岗位（如销售、商务、客服等）
+        if (com.getjobs.worker.utils.JobUtils.isNonTechnicalJob(job.getJobName())) {
+            log.info("[Boss直聘] 过滤非技术岗（销售/客服/商务等）| 公司：{} | 岗位：{}", job.getCompanyName(), job.getJobName());
+            return;
+        }
+
         String securityId = job.getSecurityId();
         String jobId = job.getEncryptJobId();
 
         if (securityId == null || securityId.isEmpty() || jobId == null || jobId.isEmpty()) {
             log.warn("岗位 {} 缺少 securityId 或 jobId，无法进行 API 快速投递", job.getJobName());
+            return;
+        }
+
+        // 查重：若该岗位或该公司已经成功投递过，则跳过
+        if (bossService.isJobOrCompanyDelivered(jobId, job.getCompanyName())) {
+            log.info("[Boss直聘] 跳过已投递过的岗位/公司 | 公司：{} | 岗位：{}", job.getCompanyName(), job.getJobName());
             return;
         }
 

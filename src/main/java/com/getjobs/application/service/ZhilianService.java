@@ -251,6 +251,33 @@ public class ZhilianService {
         zhilianJobDataMapper.update(upd, uw);
     }
 
+    /**
+     * 判断某个岗位或公司是否已经投递过
+     */
+    public boolean isJobOrCompanyDelivered(String jobId, String companyName) {
+        if (jobId != null && !jobId.trim().isEmpty()) {
+            QueryWrapper<ZhilianJobDataEntity> wrapper = new QueryWrapper<>();
+            wrapper.eq("job_id", jobId.trim())
+                    .eq("delivery_status", "已投递")
+                    .last("LIMIT 1");
+            Long count = zhilianJobDataMapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        if (companyName != null && !companyName.trim().isEmpty()) {
+            QueryWrapper<ZhilianJobDataEntity> wrapper = new QueryWrapper<>();
+            wrapper.eq("company_name", companyName.trim())
+                    .eq("delivery_status", "已投递")
+                    .last("LIMIT 1");
+            Long count = zhilianJobDataMapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ==================== 投递分析（Dashboard）与列表 ====================
 
     /** 薪资解析结果 */

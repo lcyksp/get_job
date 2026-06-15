@@ -493,6 +493,33 @@ public class Job51Service {
         }
     }
 
+    /**
+     * 判断某个岗位或公司是否已经投递过
+     */
+    public boolean isJobOrCompanyDelivered(Long jobId, String companyName) {
+        if (jobId != null) {
+            QueryWrapper<Job51Entity> wrapper = new QueryWrapper<>();
+            wrapper.eq("job_id", jobId)
+                    .eq("delivered", 1)
+                    .last("LIMIT 1");
+            Long count = job51Mapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        if (companyName != null && !companyName.trim().isEmpty()) {
+            QueryWrapper<Job51Entity> wrapper = new QueryWrapper<>();
+            wrapper.eq("comp_name", companyName.trim())
+                    .eq("delivered", 1)
+                    .last("LIMIT 1");
+            Long count = job51Mapper.selectCount(wrapper);
+            if (count != null && count > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // ==================== 投递分析与列表 ====================
 
     public static class NameValue { public String name; public long value; public NameValue() {} public NameValue(String name, long value) { this.name = name; this.value = value; } }

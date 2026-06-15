@@ -319,6 +319,18 @@ public class ZhiLian {
                     return false;
                 }
 
+                // 1) 过滤非技术岗位（如销售、商务、客服等）
+                if (com.getjobs.worker.utils.JobUtils.isNonTechnicalJob(pj.jobTitle)) {
+                    log.info("[智联招聘] 过滤非技术岗（销售/客服/商务等）| 公司：{} | 岗位：{}", pj.companyName, pj.jobTitle);
+                    continue;
+                }
+
+                // 2) 查重：若该岗位或该公司已经成功投递过，则跳过
+                if (zhilianService.isJobOrCompanyDelivered(pj.jobId, pj.companyName)) {
+                    log.info("[智联招聘] 跳过已投递过的岗位/公司 | 公司：{} | 岗位：{}", pj.companyName, pj.jobTitle);
+                    continue;
+                }
+
                 Locator card = page.locator("div.joblist-box__item").nth(pj.index);
                 Locator applyBtn = card.locator("button.collect-and-apply__btn");
                 if (applyBtn.count() == 0) {
