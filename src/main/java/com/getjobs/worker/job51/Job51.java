@@ -50,6 +50,10 @@ public class Job51 {
     private int currentPageNum = 0;
     // 当前页从JSON拦截到的jobId列表
     private final java.util.List<Long> currentPageJobIds = new java.util.ArrayList<>();
+    
+    private java.util.Set<String> blackCompanies;
+    private java.util.Set<String> blackJobs;
+    private java.util.Set<String> blackRecruiters;
 
     private static final int DEFAULT_MAX_PAGE = 50;
     private static final String BASE_URL = "https://we.51job.com/pc/search?";
@@ -67,6 +71,17 @@ public class Job51 {
      */
     public void prepare() {
         resultList.clear();
+        try {
+            this.blackCompanies = job51Service.getBlackCompanies();
+            this.blackJobs = job51Service.getBlackJobs();
+            this.blackRecruiters = job51Service.getBlackRecruiters();
+            log.info("[51job] 加载全局黑名单成功：公司数：{}，岗位数：{}，HR数：{}",
+                    blackCompanies != null ? blackCompanies.size() : 0,
+                    blackJobs != null ? blackJobs.size() : 0,
+                    blackRecruiters != null ? blackRecruiters.size() : 0);
+        } catch (Exception e) {
+            log.error("[51job] 加载黑名单异常", e);
+        }
     }
 
     /**
@@ -281,6 +296,16 @@ public class Job51 {
                 try {
                     String title = i < titles.count() ? titles.nth(i).textContent() : "未知职位";
                     String company = i < companies.count() ? companies.nth(i).textContent() : "未知公司";
+
+                    // 0) 黑名单公司/岗位过滤
+                    if (blackCompanies != null && !"未知公司".equals(company) && blackCompanies.stream().anyMatch(p -> company.toLowerCase().contains(p.toLowerCase()))) {
+                        log.info("[51job] 过滤黑名单公司 | 公司：{} | 岗位：{}", company, title);
+                        continue;
+                    }
+                    if (blackJobs != null && !"未知职位".equals(title) && blackJobs.stream().anyMatch(p -> title.toLowerCase().contains(p.toLowerCase()))) {
+                        log.info("[51job] 过滤黑名单岗位 | 公司：{} | 岗位：{}", company, title);
+                        continue;
+                    }
 
                     // 1) 过滤非技术岗位（如销售、商务、客服等）
                     if (com.getjobs.worker.utils.JobUtils.isNonTechnicalJob(title)) {

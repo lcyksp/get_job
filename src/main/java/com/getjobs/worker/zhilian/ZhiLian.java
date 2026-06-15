@@ -46,6 +46,10 @@ public class ZhiLian {
 
     private static final String HOME_URL = "https://www.zhaopin.com/sou/";
 
+    private java.util.Set<String> blackCompanies;
+    private java.util.Set<String> blackJobs;
+    private java.util.Set<String> blackRecruiters;
+
     private final ZhilianService zhilianService;
 
     private static class PageJob {
@@ -77,6 +81,19 @@ public class ZhiLian {
         log.info("智联招聘准备工作开始...");
         resultList.clear();
         isLimit = false;
+
+        try {
+            this.blackCompanies = zhilianService.getBlackCompanies();
+            this.blackJobs = zhilianService.getBlackJobs();
+            this.blackRecruiters = zhilianService.getBlackRecruiters();
+            log.info("黑名单加载完成: 公司({}) 招聘者({}) 职位({})",
+                    blackCompanies != null ? blackCompanies.size() : 0,
+                    blackRecruiters != null ? blackRecruiters.size() : 0,
+                    blackJobs != null ? blackJobs.size() : 0);
+        } catch (Throwable e) {
+            log.warn("加载黑名单失败: {}", e.getMessage());
+        }
+
         log.info("智联招聘准备工作完成");
     }
 
@@ -317,6 +334,18 @@ public class ZhiLian {
                 if (shouldStop()) {
                     sendProgress("用户取消投递或已达上限", null, null);
                     return false;
+                }
+
+                // 黑名单公司过滤 (不区分大小写模糊匹配)
+                if (blackCompanies != null && pj.companyName != null && blackCompanies.stream().anyMatch(p -> pj.companyName.toLowerCase().contains(p.toLowerCase()))) {
+                    log.info("[智联招聘] 过滤黑名单公司 | 公司：{} | 岗位：{}", pj.companyName, pj.jobTitle);
+                    continue;
+                }
+
+                // 黑名单岗位过滤 (不区分大小写模糊匹配)
+                if (blackJobs != null && pj.jobTitle != null && blackJobs.stream().anyMatch(p -> pj.jobTitle.toLowerCase().contains(p.toLowerCase()))) {
+                    log.info("[智联招聘] 过滤黑名单岗位 | 公司：{} | 岗位：{}", pj.companyName, pj.jobTitle);
+                    continue;
                 }
 
                 // 1) 过滤非技术岗位（如销售、商务、客服等）

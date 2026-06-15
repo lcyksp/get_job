@@ -7,6 +7,7 @@ import com.getjobs.application.entity.LiepinOptionEntity;
 import com.getjobs.application.mapper.LiepinConfigMapper;
 import com.getjobs.application.mapper.LiepinOptionMapper;
 import com.getjobs.application.mapper.LiepinMapper;
+import com.getjobs.application.mapper.BlacklistMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class LiepinService {
     private final LiepinOptionMapper liepinOptionMapper;
     // 记录持久化相关依赖（整合自 LiepinRecordService）
     private final LiepinMapper liepinMapper;
+    private final BlacklistMapper blacklistMapper;
     private final DataSource dataSource;
 
     // ==================== 记录表初始化与快照保存 ====================
@@ -175,6 +177,19 @@ public class LiepinService {
         }
         return false;
     }
+
+    public Set<String> getBlacklistByType(String type) {
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.getjobs.application.entity.BlacklistEntity> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        wrapper.eq(com.getjobs.application.entity.BlacklistEntity::getType, type);
+        List<com.getjobs.application.entity.BlacklistEntity> list = blacklistMapper.selectList(wrapper);
+        return list.stream()
+                .map(com.getjobs.application.entity.BlacklistEntity::getValue)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<String> getBlackCompanies() { return getBlacklistByType("company"); }
+    public Set<String> getBlackJobs() { return getBlacklistByType("job"); }
+    public Set<String> getBlackRecruiters() { return getBlacklistByType("recruiter"); }
 
     /**
      * 批量插入岗位快照（仅不存在时），减少单次网络响应后的数据库操作时间

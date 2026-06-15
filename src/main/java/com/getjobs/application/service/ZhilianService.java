@@ -7,6 +7,7 @@ import com.getjobs.application.entity.ZhilianJobDataEntity;
 import com.getjobs.application.mapper.ZhilianConfigMapper;
 import com.getjobs.application.mapper.ZhilianOptionMapper;
 import com.getjobs.application.mapper.ZhilianJobDataMapper;
+import com.getjobs.application.mapper.BlacklistMapper;
 import com.getjobs.worker.zhilian.ZhilianConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class ZhilianService {
     private final ZhilianConfigMapper zhilianConfigMapper;
     private final ZhilianOptionMapper zhilianOptionMapper;
     private final ZhilianJobDataMapper zhilianJobDataMapper;
+    private final BlacklistMapper blacklistMapper;
     private final DataSource dataSource;
 
     /** 获取第一条配置（通常只有一条） */
@@ -277,6 +279,19 @@ public class ZhilianService {
         }
         return false;
     }
+
+    public Set<String> getBlacklistByType(String type) {
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.getjobs.application.entity.BlacklistEntity> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        wrapper.eq(com.getjobs.application.entity.BlacklistEntity::getType, type);
+        List<com.getjobs.application.entity.BlacklistEntity> list = blacklistMapper.selectList(wrapper);
+        return list.stream()
+                .map(com.getjobs.application.entity.BlacklistEntity::getValue)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<String> getBlackCompanies() { return getBlacklistByType("company"); }
+    public Set<String> getBlackJobs() { return getBlacklistByType("job"); }
+    public Set<String> getBlackRecruiters() { return getBlacklistByType("recruiter"); }
 
     // ==================== 投递分析（Dashboard）与列表 ====================
 

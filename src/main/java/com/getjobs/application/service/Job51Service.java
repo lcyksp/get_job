@@ -6,6 +6,7 @@ import com.getjobs.application.entity.Job51Entity;
 import com.getjobs.application.entity.Job51OptionEntity;
 import com.getjobs.application.mapper.Job51ConfigMapper;
 import com.getjobs.application.mapper.Job51Mapper;
+import com.getjobs.application.mapper.BlacklistMapper;
 import com.getjobs.application.mapper.Job51OptionMapper;
 import com.getjobs.worker.job51.Job51Config;
 import jakarta.annotation.PostConstruct;
@@ -28,6 +29,7 @@ public class Job51Service {
     private final Job51ConfigMapper job51ConfigMapper;
     private final Job51OptionMapper job51OptionMapper;
     private final Job51Mapper job51Mapper;
+    private final BlacklistMapper blacklistMapper;
     private final DataSource dataSource;
 
     /** 获取第一条配置（通常只有一条） */
@@ -519,6 +521,19 @@ public class Job51Service {
         }
         return false;
     }
+
+    public java.util.Set<String> getBlacklistByType(String type) {
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.getjobs.application.entity.BlacklistEntity> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        wrapper.eq(com.getjobs.application.entity.BlacklistEntity::getType, type);
+        List<com.getjobs.application.entity.BlacklistEntity> list = blacklistMapper.selectList(wrapper);
+        return list.stream()
+                .map(com.getjobs.application.entity.BlacklistEntity::getValue)
+                .collect(Collectors.toSet());
+    }
+
+    public java.util.Set<String> getBlackCompanies() { return getBlacklistByType("company"); }
+    public java.util.Set<String> getBlackJobs() { return getBlacklistByType("job"); }
+    public java.util.Set<String> getBlackRecruiters() { return getBlacklistByType("recruiter"); }
 
     // ==================== 投递分析与列表 ====================
 

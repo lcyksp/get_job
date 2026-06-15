@@ -51,6 +51,10 @@ public class Liepin {
     @Autowired
     private LiepinService liepinService;
 
+    private java.util.Set<String> blackCompanies;
+    private java.util.Set<String> blackJobs;
+    private java.util.Set<String> blackRecruiters;
+
     public interface ProgressCallback {
         void onProgress(String message, Integer current, Integer total);
     }
@@ -63,6 +67,18 @@ public class Liepin {
     public void prepare() {
         this.startDate = new Date();
         this.resultList.clear();
+
+        try {
+            this.blackCompanies = liepinService.getBlackCompanies();
+            this.blackJobs = liepinService.getBlackJobs();
+            this.blackRecruiters = liepinService.getBlackRecruiters();
+            log.info("黑名单加载完成: 公司({}) 招聘者({}) 职位({})",
+                    blackCompanies != null ? blackCompanies.size() : 0,
+                    blackRecruiters != null ? blackRecruiters.size() : 0,
+                    blackJobs != null ? blackJobs.size() : 0);
+        } catch (Throwable e) {
+            log.warn("加载黑名单失败: {}", e.getMessage());
+        }
 
         // 监控猎聘接口请求与返回，输出被拦截的URL（精确匹配PC搜索相关接口）
         if (page != null && !monitoringRegistered) {
@@ -351,6 +367,28 @@ public class Liepin {
             if (jobName == null) jobName = "岗位";
             if (companyName == null) companyName = "公司";
             if (salary == null) salary = "";
+
+            final String finalCompanyName = companyName;
+            final String finalJobName = jobName;
+            final String finalRecruiterName = recruiterName;
+
+            // 黑名单公司过滤 (不区分大小写模糊匹配)
+            if (blackCompanies != null && companyName != null && !"公司".equals(companyName) && blackCompanies.stream().anyMatch(p -> finalCompanyName.toLowerCase().contains(p.toLowerCase()))) {
+                log.info("[猎聘] 过滤黑名单公司 | 公司：{} | 岗位：{}", companyName, jobName);
+                continue;
+            }
+
+            // 黑名单岗位过滤 (不区分大小写模糊匹配)
+            if (blackJobs != null && jobName != null && !"岗位".equals(jobName) && blackJobs.stream().anyMatch(p -> finalJobName.toLowerCase().contains(p.toLowerCase()))) {
+                log.info("[猎聘] 过滤黑名单岗位 | 公司：{} | 岗位：{}", companyName, jobName);
+                continue;
+            }
+
+            // 黑名单HR过滤 (不区分大小写模糊匹配)
+            if (recruiterName != null && !"HR".equals(recruiterName) && blackRecruiters != null && blackRecruiters.stream().anyMatch(p -> finalRecruiterName.toLowerCase().contains(p.toLowerCase()))) {
+                log.info("[猎聘] 过滤黑名单HR | 公司：{} | HR：{}", companyName, recruiterName);
+                continue;
+            }
 
             // 1) 过滤非技术岗位（如销售、商务、客服等）
             if (com.getjobs.worker.utils.JobUtils.isNonTechnicalJob(jobName)) {

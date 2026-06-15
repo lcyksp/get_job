@@ -205,7 +205,8 @@ public class Boss {
                                 || message.contains("遗憾") || message.contains("需要本") || message.contains("对不");
                         boolean nomatch = message.contains("不是") || message.contains("不生");
                         if (match && !nomatch) {
-                            if (blackCompanies.stream().anyMatch(companyName::contains)) {
+                            final String finalCompanyName = companyName;
+                            if (blackCompanies.stream().anyMatch(p -> finalCompanyName.toLowerCase().contains(p.toLowerCase()))) {
                                 continue;
                             }
                             companyName = companyName.replaceAll("\\.{3}", "");
@@ -427,7 +428,10 @@ public class Boss {
                 }
 
                 // 过滤（全部基于 JSON 字段），并输出过滤原因
-                if (jobName != null && blackJobs != null && blackJobs.stream().anyMatch(jobName::contains)) {
+                final String finalJobName = jobName;
+                final String finalBossCompany = bossCompany;
+                final String finalBossJobTitle = bossJobTitle;
+                if (jobName != null && blackJobs != null && blackJobs.stream().anyMatch(p -> finalJobName.toLowerCase().contains(p.toLowerCase()))) {
                     String term = findMatchedTerm(blackJobs, jobName);
                     log.info("被过滤：职位黑名单命中 | 公司：{} | 岗位：{} | 关键词：{}", bossCompany != null ? bossCompany : "", jobName, term != null ? term : "");
                     continue;
@@ -438,12 +442,12 @@ public class Boss {
                     log.info("被过滤：HR活跃状态包含‘年’ | 公司：{} | 岗位：{} | 活跃：{}", bossCompany != null ? bossCompany : "", jobName != null ? jobName : "", bossActive);
                     continue;
                 }
-                if (bossCompany != null && blackCompanies != null && blackCompanies.stream().anyMatch(bossCompany::contains)) {
+                if (bossCompany != null && blackCompanies != null && blackCompanies.stream().anyMatch(p -> finalBossCompany.toLowerCase().contains(p.toLowerCase()))) {
                     String term = findMatchedTerm(blackCompanies, bossCompany);
                     log.info("被过滤：公司黑名单命中 | 公司：{} | 岗位：{} | 关键词：{}", bossCompany, jobName != null ? jobName : "", term != null ? term : "");
                     continue;
                 }
-                if (bossJobTitle != null && blackRecruiters != null && blackRecruiters.stream().anyMatch(bossJobTitle::contains)) {
+                if (bossJobTitle != null && blackRecruiters != null && blackRecruiters.stream().anyMatch(p -> finalBossJobTitle.toLowerCase().contains(p.toLowerCase()))) {
                     String term = findMatchedTerm(blackRecruiters, bossJobTitle);
                     log.info("被过滤：招聘者黑名单命中 | 公司：{} | 岗位：{} | 招聘者：{} | 关键词：{}", bossCompany != null ? bossCompany : "", jobName != null ? jobName : "", bossJobTitle, term != null ? term : "");
                     continue;
@@ -539,9 +543,9 @@ public class Boss {
             String positionName = entity.getJobName() != null ? entity.getJobName() : "";
             String hrPosition = entity.getHrPosition() != null ? entity.getHrPosition() : "";
             try {
-                if (blackCompanies != null && blackCompanies.stream().anyMatch(companyName::contains)) filtered = true;
-                if (!filtered && blackJobs != null && blackJobs.stream().anyMatch(positionName::contains)) filtered = true;
-                if (!filtered && blackRecruiters != null && blackRecruiters.stream().anyMatch(hrPosition::contains)) filtered = true;
+                if (blackCompanies != null && blackCompanies.stream().anyMatch(p -> companyName.toLowerCase().contains(p.toLowerCase()))) filtered = true;
+                if (!filtered && blackJobs != null && blackJobs.stream().anyMatch(p -> positionName.toLowerCase().contains(p.toLowerCase()))) filtered = true;
+                if (!filtered && blackRecruiters != null && blackRecruiters.stream().anyMatch(p -> hrPosition.toLowerCase().contains(p.toLowerCase()))) filtered = true;
             } catch (Throwable ignore) {}
 
             // HR活跃状态过滤：开启过滤且活跃描述包含“年”，则标记为已过滤，但仍入库
@@ -637,8 +641,9 @@ public class Boss {
     private String findMatchedTerm(java.util.Collection<String> patterns, String text) {
         if (patterns == null || text == null) return null;
         try {
+            String lowerText = text.toLowerCase();
             for (String p : patterns) {
-                if (p != null && !p.isEmpty() && text.contains(p)) {
+                if (p != null && !p.isEmpty() && lowerText.contains(p.toLowerCase())) {
                     return p;
                 }
             }
