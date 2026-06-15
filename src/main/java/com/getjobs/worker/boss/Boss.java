@@ -431,9 +431,27 @@ public class Boss {
                 final String finalJobName = jobName;
                 final String finalBossCompany = bossCompany;
                 final String finalBossJobTitle = bossJobTitle;
-                if (jobName != null && blackJobs != null && blackJobs.stream().anyMatch(p -> finalJobName.toLowerCase().contains(p.toLowerCase()))) {
-                    String term = findMatchedTerm(blackJobs, jobName);
-                    log.info("被过滤：职位黑名单命中 | 公司：{} | 岗位：{} | 关键词：{}", bossCompany != null ? bossCompany : "", jobName, term != null ? term : "");
+                final String finalJobDesc = jobDesc;
+                
+                boolean isJobBlacklisted = false;
+                String matchedJobTerm = null;
+                if (blackJobs != null) {
+                    if (jobName != null) {
+                        matchedJobTerm = findMatchedTerm(blackJobs, jobName);
+                        if (matchedJobTerm != null) {
+                            isJobBlacklisted = true;
+                        }
+                    }
+                    if (!isJobBlacklisted && jobDesc != null) {
+                        matchedJobTerm = findMatchedTerm(blackJobs, jobDesc);
+                        if (matchedJobTerm != null) {
+                            isJobBlacklisted = true;
+                        }
+                    }
+                }
+                
+                if (isJobBlacklisted) {
+                    log.info("被过滤：职位或JD黑名单命中 | 公司：{} | 岗位：{} | 关键词：{}", bossCompany != null ? bossCompany : "", jobName, matchedJobTerm != null ? matchedJobTerm : "");
                     continue;
                 }
                 // HR活跃状态过滤：当开启过滤开关且活跃描述包含“年”时，视为不活跃
@@ -542,9 +560,10 @@ public class Boss {
             String companyName = entity.getCompanyName() != null ? entity.getCompanyName() : "";
             String positionName = entity.getJobName() != null ? entity.getJobName() : "";
             String hrPosition = entity.getHrPosition() != null ? entity.getHrPosition() : "";
+            String jobDescription = entity.getJobDescription() != null ? entity.getJobDescription() : "";
             try {
                 if (blackCompanies != null && blackCompanies.stream().anyMatch(p -> companyName.toLowerCase().contains(p.toLowerCase()))) filtered = true;
-                if (!filtered && blackJobs != null && blackJobs.stream().anyMatch(p -> positionName.toLowerCase().contains(p.toLowerCase()))) filtered = true;
+                if (!filtered && blackJobs != null && (blackJobs.stream().anyMatch(p -> positionName.toLowerCase().contains(p.toLowerCase())) || blackJobs.stream().anyMatch(p -> jobDescription.toLowerCase().contains(p.toLowerCase())))) filtered = true;
                 if (!filtered && blackRecruiters != null && blackRecruiters.stream().anyMatch(p -> hrPosition.toLowerCase().contains(p.toLowerCase()))) filtered = true;
             } catch (Throwable ignore) {}
 
